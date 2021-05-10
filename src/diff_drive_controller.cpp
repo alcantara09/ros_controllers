@@ -462,6 +462,13 @@ namespace diff_drive_controller{
     Commands curr_cmd = *(command_.readFromRT());
     const double dt = (time - curr_cmd.stamp).toSec();
 
+    if(dt < 0)
+    {
+      ROS_ERROR("Invalid time interval, delta time cannot be negative");
+      curr_cmd.lin = 0.0;
+      curr_cmd.ang = 0.0;
+    }
+
     // Brake if cmd_vel has timeout:
     if (dt > cmd_vel_timeout_)
     {
