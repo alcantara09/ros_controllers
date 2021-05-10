@@ -1,0 +1,45 @@
+aliases:
+  - &build_and_test
+    name: Build and test
+    image: osrf/ros:melodic-desktop-full-bionic
+    script:
+      - apt update -y
+      - apt install git ssh -y
+      - git clone git@bitbucket.org:blue-ocean-robotics/bitbucket-ros.git
+      - bitbucket-ros/prepare-workspace.bash
+      - bitbucket-ros/build.bash
+      - bitbucket-ros/test.bash
+  - &deploy
+    name: Deploy
+    image: osrf/ros:melodic-desktop-full-bionic
+    deployment: production
+    artifacts:
+      - "*.deb"
+    script:
+      - apt update -y
+      - apt install git ssh -y
+      - git clone git@bitbucket.org:blue-ocean-robotics/bitbucket-ros.git
+      - bitbucket-ros/binarize.bash
+      - bitbucket-ros/upload-bor.bash
+      - bitbucket-ros/docs.bash
+      - bitbucket-ros/trigger-upstream-projects.py
+ 
+pipelines:
+  default:
+    - step:
+        <<: *build_and_test
+    - step:
+        <<: *deploy
+        trigger: manual
+ 
+  pull-requests:
+    '**':
+      - step:
+          <<: *build_and_test
+ 
+  tags:
+    '**':
+      - step:
+          <<: *build_and_test
+      - step:
+          <<: *deploy
